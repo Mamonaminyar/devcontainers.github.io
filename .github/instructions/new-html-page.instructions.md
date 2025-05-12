@@ -1,9 +1,18 @@
 ---
 applyTo: '**/*.html'
 ---
+## Guidance for new HTML website pages
 
-## Project coding standards for new HTML pages of the website
+### Layout
+- Every new HTML page should have information like the following at the top, where the title is updated appropriately:
+```
+---
+layout: singlePage
+title: Dev Container Guides
+---
+```
+- The layout should come from the _layouts folder in the repo. Pages should default to `layout: singlePage`.
 
-Every new HTML page should have a search bar added, similar to the search bar that's available on the features.html, templates.html, and collections.html pages.
-
-Any new page should also be added to the end (far right) of the top nav bar of the website.
+### Content
+- Every new HTML page should have a search bar added toward the top, similar to the search bar that's available on the features.html, templates.html, and collections.html pages.
+- Make all headings clickable links.

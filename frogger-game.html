@@ -1,0 +1,203 @@
+---
+layout: default
+title: Frogger Game
+sectionid: frogger-game
+---
+
+<div class="container mt-5 mb-5">
+  <h2 class="mb-4"><a href="#frogger-game" id="frogger-game">Frogger Game</a></h2>
+  <div class="text-center mb-3">
+    <button id="restartBtn" class="btn btn-primary" style="min-width:120px;">Restart</button>
+  </div>
+  <canvas id="froggerCanvas" width="400" height="500" style="border:1px solid #0078D4; background:#1e1e2f; display:block; margin:auto; box-shadow:0 0 24px #0078D4,0 0 0 8px #222 inset;"></canvas>
+  <p class="text-center mt-3">Use the arrow keys to move the frog. Get to the top without hitting cars!</p>
+  <p class="text-center">Press <strong>R</strong> to restart the game at any time.</p>
+</div>
+<script>
+
+const canvas = document.getElementById('froggerCanvas');
+const ctx = canvas.getContext('2d');
+const grid = 50;
+const rows = 10;
+const cols = 8;
+let frog, cars, gameOver, win;
+
+function resetGame() {
+  frog = { x: 3, y: 9 };
+  cars = [
+    { y: 7, speed: 2, dir: 1, positions: [0, 4] },
+    { y: 6, speed: 3, dir: -1, positions: [2, 6] },
+    { y: 5, speed: 2, dir: 1, positions: [1, 5] },
+    { y: 3, speed: 3, dir: -1, positions: [3, 7] }
+  ];
+  gameOver = false;
+  win = false;
+}
+
+resetGame();
+// Restart button handler
+document.getElementById('restartBtn').addEventListener('click', function() {
+  resetGame();
+});
+
+function drawFrog() {
+  // Draw a dev container: blue box with devcontainers logo (or icon-like)
+  const x = frog.x * grid + 10;
+  const y = frog.y * grid + 10;
+  const size = grid - 20;
+  // Draw blue box
+  ctx.fillStyle = '#0078D4'; // VS Code/devcontainers blue
+  ctx.fillRect(x, y, size, size);
+  // Draw white border
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(x, y, size, size);
+  // Draw a simple devcontainer icon (white brackets)
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x + 6, y + size/2 - 8); ctx.lineTo(x + 6, y + size/2 + 8); // left bracket |
+  ctx.moveTo(x + 6, y + size/2 - 8); ctx.lineTo(x + 14, y + size/2 - 8); // top _
+  ctx.moveTo(x + 6, y + size/2 + 8); ctx.lineTo(x + 14, y + size/2 + 8); // bottom _
+  ctx.moveTo(x + size - 6, y + size/2 - 8); ctx.lineTo(x + size - 6, y + size/2 + 8); // right bracket |
+  ctx.moveTo(x + size - 14, y + size/2 - 8); ctx.lineTo(x + size - 6, y + size/2 - 8); // top _
+  ctx.moveTo(x + size - 14, y + size/2 + 8); ctx.lineTo(x + size - 6, y + size/2 + 8); // bottom _
+  ctx.stroke();
+}
+
+// Draw cars as dev tool icons (VS Code, Docker, Git, Terminal)
+function drawCars() {
+  const toolColors = ['#0078D4', '#2496ED', '#F05032', '#222']; // VS Code, Docker, Git, Terminal
+  const toolLabels = ['</>', '🐳', 'GIT', 'TER'];
+  cars.forEach((carRow, i) => {
+    carRow.positions.forEach((pos, j) => {
+      const x = pos * grid + 5;
+      const y = carRow.y * grid + 15;
+      const w = grid - 10;
+      const h = grid - 30;
+      // Pick a tool type based on row and car index
+      const toolIdx = (i + j) % toolColors.length;
+      ctx.fillStyle = toolColors[toolIdx];
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2;
+      ctx.fillRect(x, y, w, h);
+      ctx.strokeRect(x, y, w, h);
+      // Draw tool label/icon
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 18px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(toolLabels[toolIdx], x + w/2, y + h/2);
+    });
+  });
+}
+
+function moveCars() {
+  // Reduce the movement multiplier to slow down the cars
+  const speedMultiplier = 0.025; // was 0.05
+  cars.forEach(carRow => {
+    for (let i = 0; i < carRow.positions.length; i++) {
+      carRow.positions[i] += carRow.speed * carRow.dir * speedMultiplier;
+      if (carRow.dir === 1 && carRow.positions[i] > cols) carRow.positions[i] = -1;
+      if (carRow.dir === -1 && carRow.positions[i] < -1) carRow.positions[i] = cols;
+    }
+  });
+}
+
+function checkCollision() {
+  for (const carRow of cars) {
+    if (frog.y === carRow.y) {
+      for (const pos of carRow.positions) {
+        if (Math.abs(frog.x - Math.round(pos)) < 0.7) {
+          gameOver = true;
+          return;
+        }
+      }
+    }
+  }
+}
+
+function checkWin() {
+  if (frog.y === 0) {
+    win = true;
+    gameOver = true;
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // Draw code editor background (lines)
+  ctx.save();
+  for (let y = 0; y < canvas.height; y += 24) {
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(canvas.width, y);
+    ctx.stroke();
+  }
+  // Draw left gutter (like a code editor)
+  ctx.fillStyle = '#232336';
+  ctx.fillRect(0, 0, 36, canvas.height);
+  // Draw line numbers
+  ctx.fillStyle = '#6a9fb5';
+  ctx.font = '12px monospace';
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'top';
+  for (let i = 1; i <= rows; i++) {
+    ctx.fillText(i, 32, (i-1)*grid + 8);
+  }
+  ctx.restore();
+  // Draw safe zones (as terminal/code header/footer)
+  ctx.fillStyle = '#222c37';
+  ctx.fillRect(0, 0, canvas.width, grid);
+  ctx.fillRect(0, canvas.height - grid, canvas.width, grid);
+  // Draw road (pipeline)
+  ctx.fillStyle = '#252540';
+  ctx.fillRect(36, grid, canvas.width - 36, canvas.height - 2 * grid);
+  // Draw a pipeline line
+  ctx.strokeStyle = '#0078D4';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(36, canvas.height/2);
+  ctx.lineTo(canvas.width, canvas.height/2);
+  ctx.stroke();
+  drawFrog();
+  drawCars();
+  if (gameOver) {
+    ctx.fillStyle = win ? 'lime' : 'red';
+    ctx.font = 'bold 32px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(win ? 'You Win!' : 'Game Over', canvas.width / 2, canvas.height / 2);
+  }
+}
+
+document.addEventListener('keydown', e => {
+  // Only handle arrow keys if the canvas is focused or mouse is over it
+  const arrowKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+  if (arrowKeys.includes(e.key)) {
+    // Prevent page from scrolling
+    e.preventDefault();
+    if (gameOver) return;
+    if (e.key === 'ArrowUp' && frog.y > 0) frog.y--;
+    if (e.key === 'ArrowDown' && frog.y < rows - 1) frog.y++;
+    if (e.key === 'ArrowLeft' && frog.x > 0) frog.x--;
+    if (e.key === 'ArrowRight' && frog.x < cols - 1) frog.x++;
+  }
+  // Keyboard shortcut: R or r to restart
+  if (e.key === 'r' || e.key === 'R') {
+    e.preventDefault();
+    resetGame();
+  }
+});
+
+function gameLoop() {
+  if (!gameOver) {
+    moveCars();
+    checkCollision();
+    checkWin();
+  }
+  draw();
+  requestAnimationFrame(gameLoop);
+}
+gameLoop();
+</script>

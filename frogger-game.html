@@ -21,6 +21,50 @@ const grid = 50;
 const rows = 10;
 const cols = 8;
 let frog, cars, gameOver, win, level, maxLevel;
+let levelTheme;
+
+const levelThemes = [
+  {
+    name: 'Setup',
+    bg: '#1e1e2f',
+    road: '#252540',
+    safe: '#222c37',
+    line: '#0078D4',
+    desc: 'Setting up your dev container...'
+  },
+  {
+    name: 'Install',
+    bg: '#1e2f1e',
+    road: '#2a4025',
+    safe: '#234022',
+    line: '#4CAF50',
+    desc: 'Installing dependencies...'
+  },
+  {
+    name: 'Build',
+    bg: '#2f1e1e',
+    road: '#402525',
+    safe: '#402222',
+    line: '#FF9800',
+    desc: 'Building your project...'
+  },
+  {
+    name: 'Test',
+    bg: '#1e2f2f',
+    road: '#254040',
+    safe: '#224040',
+    line: '#00BCD4',
+    desc: 'Running tests...'
+  },
+  {
+    name: 'Deploy',
+    bg: '#2f2f1e',
+    road: '#404025',
+    safe: '#404022',
+    line: '#FFC107',
+    desc: 'Deploying to production!'
+  }
+];
 
 
 function getCarsForLevel(lvl) {
@@ -72,6 +116,7 @@ function getCarsForLevel(lvl) {
   return config;
 }
 
+
 function resetGame(newLevel) {
   frog = { x: 3, y: 9 };
   level = typeof newLevel === 'number' ? newLevel : 1;
@@ -79,6 +124,10 @@ function resetGame(newLevel) {
   cars = getCarsForLevel(level);
   gameOver = false;
   win = false;
+  // Set theme for this level
+  levelTheme = levelThemes[(level - 1) % levelThemes.length];
+  // Set background color
+  canvas.style.background = levelTheme.bg;
 }
 
 resetGame(1);
@@ -185,6 +234,7 @@ function checkWin() {
   }
 }
 
+
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   // Draw code editor background (lines)
@@ -209,24 +259,27 @@ function draw() {
   }
   ctx.restore();
   // Draw safe zones (as terminal/code header/footer)
-  ctx.fillStyle = '#222c37';
+  ctx.fillStyle = levelTheme.safe;
   ctx.fillRect(0, 0, canvas.width, grid);
   ctx.fillRect(0, canvas.height - grid, canvas.width, grid);
   // Draw road (pipeline)
-  ctx.fillStyle = '#252540';
+  ctx.fillStyle = levelTheme.road;
   ctx.fillRect(36, grid, canvas.width - 36, canvas.height - 2 * grid);
   // Draw a pipeline line
-  ctx.strokeStyle = '#0078D4';
+  ctx.strokeStyle = levelTheme.line;
   ctx.lineWidth = 4;
   ctx.beginPath();
   ctx.moveTo(36, canvas.height/2);
   ctx.lineTo(canvas.width, canvas.height/2);
   ctx.stroke();
-  // Draw level indicator
+  // Draw level indicator and theme name
   ctx.fillStyle = '#fff';
   ctx.font = 'bold 18px sans-serif';
   ctx.textAlign = 'left';
-  ctx.fillText('Level: ' + level + ' / ' + maxLevel, 48, 32);
+  ctx.fillText('Level: ' + level + ' / ' + maxLevel + ' - ' + levelTheme.name, 48, 32);
+  // Draw theme description
+  ctx.font = 'italic 14px sans-serif';
+  ctx.fillText(levelTheme.desc, 48, 54);
   drawFrog();
   drawCars();
   if (gameOver) {

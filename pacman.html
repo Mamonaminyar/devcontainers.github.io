@@ -42,6 +42,7 @@ sectionid: pacman
 <a href="#pacman-game" class="pacman-link"><h1 id="pacman-game">Pacman Game</h1></a>
 <canvas id="pacmanCanvas" width="896" height="992"></canvas>
 <p>Use arrow keys to move Pacman. Collect all the whale icons while avoiding the monsters.</p>
+<div id="funFactContainer" style="display: none; margin: 15px auto; max-width: 600px; padding: 15px; background-color: #0066b8; color: white; border-radius: 5px; text-align: center; font-weight: bold;"></div>
 <button id="restartButton" class="pacman-button">Restart Game</button>
 <script>
 // Larger Pacman game (dev container themed, fewer collectibles, bigger whales)
@@ -306,6 +307,10 @@ function checkCollisions() {
   for (const monster of globalThis.monsterStates) {
     if (monster.x === pacman.x && monster.y === pacman.y) {
       lives--;
+      
+      // Show a dev container fun fact
+      showRandomDevContainerFact();
+      
       if (lives <= 0) {
         gameOver = true;
       } else {
@@ -344,6 +349,38 @@ function drawGameOver() {
   ctx.textAlign = 'left'; // Reset text align
 }
 
+// Define dev container fun facts
+const devContainerFacts = [
+  "Dev containers provide a consistent development environment for all team members!",
+  "Dev containers can include pre-installed tools, runtimes, and dependencies!",
+  "You can customize your dev container with VS Code extensions!",
+  "Dev containers help eliminate 'it works on my machine' problems!",
+  "Docker is the most common runtime used for dev containers!",
+  "Dev containers can be used with GitHub Codespaces for cloud development!",
+  "You can use devcontainer.json to define your development environment!",
+  "Dev containers support port forwarding to access running services!",
+  "Dev containers can be version-controlled alongside your code!",
+  "You can mount your local filesystem into a dev container!",
+  "Dev container features are reusable components for common tools!",
+  "VS Code automatically detects dev containers in repositories!",
+  "Dev containers can significantly reduce onboarding time for new developers!",
+  "You can use multi-container setups with Docker Compose!",
+  "Dev containers support GPU acceleration for ML development!"
+];
+
+// Function to display a random dev container fun fact
+function showRandomDevContainerFact() {
+  const factContainer = document.getElementById('funFactContainer');
+  const randomFact = devContainerFacts[Math.floor(Math.random() * devContainerFacts.length)];
+  factContainer.textContent = "Dev Container Fun Fact: " + randomFact;
+  factContainer.style.display = 'block';
+  
+  // Hide the fact after 5 seconds
+  setTimeout(() => {
+    factContainer.style.display = 'none';
+  }, 5000);
+}
+
 // Reset game state
 function resetGame() {
   // Reset map (restore dots)
@@ -377,6 +414,9 @@ function resetGame() {
   
   // Reset pacman
   pacman = { x: 14, y: 17, dx: 0, dy: 0, nextDx: 0, nextDy: 0 };
+  
+  // Hide fun fact container
+  document.getElementById('funFactContainer').style.display = 'none';
   
   // Reset monsters to original positions
   globalThis.monsterStates = monsters.map(m => ({...m, dx: 0, dy: 0}));

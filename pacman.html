@@ -13,48 +13,50 @@ sectionid: pacman
   background: #000;
   display: block;
   margin: 0 auto 20px auto;
-  border: 2px solid #FFD700;
+  border: 4px solid #25d6a2;
 }
 .pacman-link {
-  color: #FFD700;
+  color: #25d6a2;
   text-decoration: underline;
   cursor: pointer;
 }
 </style>
 
 <a href="#pacman-game" class="pacman-link"><h1 id="pacman-game">Pacman Game</h1></a>
-<canvas id="pacmanCanvas" width="448" height="496"></canvas>
-<p>Use arrow keys to move Pacman. Eat all the dots!</p>
+<canvas id="pacmanCanvas" width="896" height="992"></canvas>
+<p>Use arrow keys to move Pacman. Eat all the features!</p>
 <script>
-// Simple Pacman game (mini version)
+// Larger Pacman game (dev container themed, fewer collectibles, bigger whales)
 const canvas = document.getElementById('pacmanCanvas');
 const ctx = canvas.getContext('2d');
-const tileSize = 16;
+const tileSize = 32;
+const MOVE_INTERVAL = 80; // ms, decrease for slightly faster speed
+// Fewer collectibles: remove about half the dots
 const map = [
   '############################',
-  '#............##............#',
+  '#      ....##....      ....#',
   '#.####.#####.##.#####.####.#',
   '#o####.#####.##.#####.####o#',
   '#.####.#####.##.#####.####.#',
-  '#..........................#',
+  '#                          #',
   '#.####.##.########.##.####.#',
   '#.####.##.########.##.####.#',
-  '#......##....##....##......#',
+  '#      ##    ##    ##      #',
   '######.##### ## #####.######',
   '######.##### ## #####.######',
   '######.##          ##.######',
   '######.## ######## ##.######',
   '######.## ######## ##.######',
-  '#............##............#',
+  '#      ....##....      ....#',
   '#.####.#####.##.#####.####.#',
   '#.####.#####.##.#####.####.#',
-  '#o..##................##..o#',
+  '#o..##                ##..o#',
   '###.##.##.########.##.##.###',
   '###.##.##.########.##.##.###',
-  '#......##....##....##......#',
+  '#      ##    ##    ##      #',
   '#.##########.##.##########.#',
   '#.##########.##.##########.#',
-  '#..........................#',
+  '#                          #',
   '############################'
 ];
 let pacman = { x: 14, y: 17, dx: 0, dy: 0, nextDx: 0, nextDy: 0 };
@@ -65,21 +67,146 @@ function drawMap() {
   for (let y = 0; y < map.length; y++) {
     for (let x = 0; x < map[y].length; x++) {
       if (map[y][x] === '#') {
-        ctx.fillStyle = '#2222FF';
+        ctx.fillStyle = '#0066b8'; // Dev Container blue
         ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
       } else if (map[y][x] === '.' || map[y][x] === 'o') {
-        ctx.fillStyle = '#FFD700';
-        ctx.beginPath();
-        ctx.arc(x * tileSize + tileSize/2, y * tileSize + tileSize/2, map[y][x] === 'o' ? 4 : 2, 0, 2 * Math.PI);
-        ctx.fill();
+        // Draw a bigger Docker whale icon for features
+        drawWhaleIcon(ctx, x * tileSize + tileSize/2, y * tileSize + tileSize/2, map[y][x] === 'o' ? 32 : 28);
       }
     }
   }
 }
+
+// Draw a simple Docker whale icon using canvas primitives
+function drawWhaleIcon(ctx, cx, cy, size) {
+  // Body
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(size/32, size/32);
+  ctx.beginPath();
+  ctx.moveTo(-12, 4); ctx.bezierCurveTo(-16, 4, -16, -4, -12, -4); // tail
+  ctx.lineTo(12, -4); ctx.bezierCurveTo(16, -4, 16, 4, 12, 4); // head
+  ctx.quadraticCurveTo(0, 12, -12, 4); // belly
+  ctx.closePath();
+  ctx.fillStyle = '#2496ed'; // Docker blue
+  ctx.fill();
+  // Eye
+  ctx.beginPath();
+  ctx.arc(8, 0, 1.5, 0, 2 * Math.PI);
+  ctx.fillStyle = '#fff';
+  ctx.fill();
+  // Water spout
+  ctx.beginPath();
+  ctx.moveTo(0, -8); ctx.lineTo(0, -16);
+  ctx.strokeStyle = '#25d6a2';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(0, -16, 2, 0, Math.PI*2);
+  ctx.fillStyle = '#25d6a2';
+  ctx.fill();
+  ctx.restore();
+}
+
+// Monster definitions
+const monsters = [
+  { name: 'YAML Yeti', color: '#007acc', x: 2, y: 2, icon: 'yeti' },
+  { name: 'Dependency Dragon', color: '#25d6a2', x: 25, y: 2, icon: 'dragon' },
+  { name: 'Build Bug', color: '#e74c3c', x: 2, y: 21, icon: 'bug' },
+  { name: 'Merge Monster', color: '#9b59b6', x: 25, y: 21, icon: 'merge' },
+  { name: 'Registry Ghost', color: '#fff', x: 14, y: 2, icon: 'ghost' },
+  { name: 'Port Goblin', color: '#f39c12', x: 2, y: 12, icon: 'goblin' },
+  { name: 'Token Troll', color: '#f1c40f', x: 25, y: 12, icon: 'troll' },
+  { name: 'Cache Kraken', color: '#17a2b8', x: 14, y: 21, icon: 'kraken' }
+];
+
+function drawMonsters() {
+  for (const m of monsters) {
+    drawMonsterIcon(ctx, m.x * tileSize + tileSize/2, m.y * tileSize + tileSize/2, 28, m.color, m.icon);
+  }
+}
+
+function drawMonsterIcon(ctx, cx, cy, size, color, icon) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(size/32, size/32);
+  // Body
+  ctx.beginPath();
+  ctx.arc(0, 0, 14, Math.PI, 2 * Math.PI);
+  ctx.lineTo(14, 14); // right foot
+  ctx.lineTo(7, 10); // right middle
+  ctx.lineTo(0, 14); // center foot
+  ctx.lineTo(-7, 10); // left middle
+  ctx.lineTo(-14, 14); // left foot
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+  // Eyes
+  ctx.beginPath();
+  ctx.arc(-5, -2, 2.5, 0, 2 * Math.PI);
+  ctx.arc(5, -2, 2.5, 0, 2 * Math.PI);
+  ctx.fillStyle = '#fff';
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(-5, -2, 1, 0, 2 * Math.PI);
+  ctx.arc(5, -2, 1, 0, 2 * Math.PI);
+  ctx.fillStyle = '#222';
+  ctx.fill();
+  // Icon overlays (simple for each monster)
+  ctx.save();
+  switch(icon) {
+    case 'yeti': // curly brackets
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(-7, 4, 3, 0.5*Math.PI, 1.5*Math.PI); ctx.stroke();
+      ctx.beginPath(); ctx.arc(7, 4, 3, 1.5*Math.PI, 0.5*Math.PI); ctx.stroke();
+      break;
+    case 'dragon': // chain
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(-6, 6); ctx.lineTo(6, 6); ctx.stroke();
+      ctx.beginPath(); ctx.arc(-6, 6, 2, 0, 2*Math.PI); ctx.stroke();
+      ctx.beginPath(); ctx.arc(6, 6, 2, 0, 2*Math.PI); ctx.stroke();
+      break;
+    case 'bug': // bug
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(0, 7, 4, 0, Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-4, 7); ctx.lineTo(-8, 11); ctx.moveTo(4, 7); ctx.lineTo(8, 11); ctx.stroke();
+      break;
+    case 'merge': // branch
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(-6, 6); ctx.lineTo(0, 0); ctx.lineTo(6, 6); ctx.stroke();
+      ctx.beginPath(); ctx.arc(-6, 6, 2, 0, 2*Math.PI); ctx.stroke();
+      ctx.beginPath(); ctx.arc(6, 6, 2, 0, 2*Math.PI); ctx.stroke();
+      break;
+    case 'ghost': // cloud
+      ctx.strokeStyle = '#bbb'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(0, 7, 5, Math.PI, 0); ctx.stroke();
+      ctx.beginPath(); ctx.arc(-4, 7, 2, Math.PI, 0); ctx.stroke();
+      ctx.beginPath(); ctx.arc(4, 7, 2, Math.PI, 0); ctx.stroke();
+      break;
+    case 'goblin': // plug
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(0, 8); ctx.lineTo(0, 12); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-3, 12); ctx.lineTo(3, 12); ctx.stroke();
+      break;
+    case 'troll': // key
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(-2, 8, 2, 0, 2*Math.PI); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, 8); ctx.lineTo(6, 8); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(4, 6); ctx.lineTo(4, 10); ctx.stroke();
+      break;
+    case 'kraken': // tentacles
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+      for(let i=-2;i<=2;i++) { ctx.beginPath(); ctx.moveTo(i*3, 14); ctx.lineTo(i*3, 10); ctx.stroke(); }
+      break;
+  }
+  ctx.restore();
+  ctx.restore();
+}
+
 function drawPacman() {
   ctx.fillStyle = '#FFFF00';
   ctx.beginPath();
-  ctx.arc(pacman.x * tileSize + tileSize/2, pacman.y * tileSize + tileSize/2, tileSize/2-1, 0.25 * Math.PI, 1.75 * Math.PI, false);
+  ctx.arc(pacman.x * tileSize + tileSize/2, pacman.y * tileSize + tileSize/2, tileSize/2-2, 0.25 * Math.PI, 1.75 * Math.PI, false);
   ctx.lineTo(pacman.x * tileSize + tileSize/2, pacman.y * tileSize + tileSize/2);
   ctx.fill();
 }
@@ -110,32 +237,109 @@ function eatDot() {
 }
 function drawScore() {
   ctx.fillStyle = '#FFF';
-  ctx.font = '16px Arial';
-  ctx.fillText('Score: ' + score, 10, canvas.height - 10);
+  ctx.font = '28px Arial';
+  ctx.fillText('Score: ' + score, 20, canvas.height - 20);
 }
-function gameLoop() {
+
+document.addEventListener('keydown', e => {
+  if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.key)) {
+    e.preventDefault();
+    let moved = false;
+    if (e.key === 'ArrowUp') { pacman.nextDx = 0; pacman.nextDy = -1; moved = true; }
+    if (e.key === 'ArrowDown') { pacman.nextDx = 0; pacman.nextDy = 1; moved = true; }
+    if (e.key === 'ArrowLeft') { pacman.nextDx = -1; pacman.nextDy = 0; moved = true; }
+    if (e.key === 'ArrowRight') { pacman.nextDx = 1; pacman.nextDy = 0; moved = true; }
+    if (moved && canMove(pacman.x + pacman.nextDx, pacman.y + pacman.nextDy)) {
+      pacman.dx = pacman.nextDx;
+      pacman.dy = pacman.nextDy;
+      movePacman();
+      eatDot();
+      drawMap();
+      drawPacman();
+      drawScore();
+      if (score >= dots) {
+        ctx.fillStyle = '#25d6a2';
+        ctx.font = '48px Arial';
+        ctx.fillText('All Features Collected!', canvas.width/2 - 260, canvas.height/2);
+      }
+    }
+  }
+});
+
+function gameLoop(timestamp) {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawMap();
-  movePacman();
-  eatDot();
+  drawMonsters();
   drawPacman();
   drawScore();
   if (score >= dots) {
-    ctx.fillStyle = '#0F0';
-    ctx.font = '32px Arial';
-    ctx.fillText('You Win!', canvas.width/2 - 60, canvas.height/2);
+    ctx.fillStyle = '#25d6a2';
+    ctx.font = '48px Arial';
+    ctx.fillText('All Features Collected!', canvas.width/2 - 260, canvas.height/2);
     return;
   }
   requestAnimationFrame(gameLoop);
 }
-document.addEventListener('keydown', e => {
-  if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.key)) {
-    e.preventDefault();
-    if (e.key === 'ArrowUp') { pacman.nextDx = 0; pacman.nextDy = -1; }
-    if (e.key === 'ArrowDown') { pacman.nextDx = 0; pacman.nextDy = 1; }
-    if (e.key === 'ArrowLeft') { pacman.nextDx = -1; pacman.nextDy = 0; }
-    if (e.key === 'ArrowRight') { pacman.nextDx = 1; pacman.nextDy = 0; }
-  }
-});
-gameLoop();
+
+requestAnimationFrame(gameLoop);
+</script>
+
+<!-- Monster Key -->
+<div id="monster-key" style="max-width: 600px; margin: 40px auto 0 auto; background: #111; color: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px #0002;">
+  <h2 style="text-align:center;"><a href="#monster-key" style="color:#25d6a2;text-decoration:underline;">Monster Key</a></h2>
+  <ul style="list-style:none; padding:0; margin:0; display:flex; flex-wrap:wrap; justify-content:space-around;">
+    <li style="margin:10px 20px; display:flex; align-items:center;">
+      <span id="icon-yeti"></span>
+      <span style="margin-left:10px;">YAML Yeti <span style="color:#888;">(blue, curly brackets)</span></span>
+    </li>
+    <li style="margin:10px 20px; display:flex; align-items:center;">
+      <span id="icon-dragon"></span>
+      <span style="margin-left:10px;">Dependency Dragon <span style="color:#888;">(green, chain)</span></span>
+    </li>
+    <li style="margin:10px 20px; display:flex; align-items:center;">
+      <span id="icon-bug"></span>
+      <span style="margin-left:10px;">Build Bug <span style="color:#888;">(red, bug)</span></span>
+    </li>
+    <li style="margin:10px 20px; display:flex; align-items:center;">
+      <span id="icon-merge"></span>
+      <span style="margin-left:10px;">Merge Monster <span style="color:#888;">(purple, branch)</span></span>
+    </li>
+    <li style="margin:10px 20px; display:flex; align-items:center;">
+      <span id="icon-ghost"></span>
+      <span style="margin-left:10px;">Registry Ghost <span style="color:#888;">(white, cloud)</span></span>
+    </li>
+    <li style="margin:10px 20px; display:flex; align-items:center;">
+      <span id="icon-goblin"></span>
+      <span style="margin-left:10px;">Port Goblin <span style="color:#888;">(orange, plug)</span></span>
+    </li>
+    <li style="margin:10px 20px; display:flex; align-items:center;">
+      <span id="icon-troll"></span>
+      <span style="margin-left:10px;">Token Troll <span style="color:#888;">(yellow, key)</span></span>
+    </li>
+    <li style="margin:10px 20px; display:flex; align-items:center;">
+      <span id="icon-kraken"></span>
+      <span style="margin-left:10px;">Cache Kraken <span style="color:#888;">(teal, tentacles)</span></span>
+    </li>
+  </ul>
+</div>
+<script>
+// Draw monster icons for the key
+const keyIcons = [
+  {id:'icon-yeti', color:'#007acc', icon:'yeti'},
+  {id:'icon-dragon', color:'#25d6a2', icon:'dragon'},
+  {id:'icon-bug', color:'#e74c3c', icon:'bug'},
+  {id:'icon-merge', color:'#9b59b6', icon:'merge'},
+  {id:'icon-ghost', color:'#fff', icon:'ghost'},
+  {id:'icon-goblin', color:'#f39c12', icon:'goblin'},
+  {id:'icon-troll', color:'#f1c40f', icon:'troll'},
+  {id:'icon-kraken', color:'#17a2b8', icon:'kraken'}
+];
+for (const k of keyIcons) {
+  const c = document.createElement('canvas');
+  c.width = 36; c.height = 36;
+  c.style.verticalAlign = 'middle';
+  const x = c.getContext('2d');
+  drawMonsterIcon(x, 18, 18, 32, k.color, k.icon);
+  document.getElementById(k.id).appendChild(c);
+}
 </script>

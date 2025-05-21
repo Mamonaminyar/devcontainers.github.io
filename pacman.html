@@ -108,20 +108,38 @@ function drawWhaleIcon(ctx, cx, cy, size) {
   ctx.restore();
 }
 
-// Monster definitions
+// Monster definitions (all on the path)
 const monsters = [
-  { name: 'YAML Yeti', color: '#007acc', x: 2, y: 2, icon: 'yeti' },
-  { name: 'Dependency Dragon', color: '#25d6a2', x: 25, y: 2, icon: 'dragon' },
-  { name: 'Build Bug', color: '#e74c3c', x: 2, y: 21, icon: 'bug' },
-  { name: 'Merge Monster', color: '#9b59b6', x: 25, y: 21, icon: 'merge' },
-  { name: 'Registry Ghost', color: '#fff', x: 14, y: 2, icon: 'ghost' },
-  { name: 'Port Goblin', color: '#f39c12', x: 2, y: 12, icon: 'goblin' },
-  { name: 'Token Troll', color: '#f1c40f', x: 25, y: 12, icon: 'troll' },
-  { name: 'Cache Kraken', color: '#17a2b8', x: 14, y: 21, icon: 'kraken' }
+  { name: 'YAML Yeti', color: '#007acc', x: 6, y: 1, icon: 'yeti' }, // path
+  { name: 'Dependency Dragon', color: '#25d6a2', x: 21, y: 1, icon: 'dragon' }, // path
+  { name: 'Build Bug', color: '#e74c3c', x: 6, y: 23, icon: 'bug' }, // path
+  { name: 'Merge Monster', color: '#9b59b6', x: 21, y: 23, icon: 'merge' }, // path
+  { name: 'Registry Ghost', color: '#fff', x: 14, y: 5, icon: 'ghost' }, // path
+  { name: 'Port Goblin', color: '#f39c12', x: 7, y: 12, icon: 'goblin' }, // path
+  { name: 'Token Troll', color: '#f1c40f', x: 21, y: 12, icon: 'troll' }, // path
+  { name: 'Cache Kraken', color: '#17a2b8', x: 14, y: 18, icon: 'kraken' } // path
 ];
 
+// Monster state for movement
+globalThis.monsterStates = monsters.map(m => ({...m, dx: 0, dy: 0}));
+
+function moveMonsters() {
+  for (const m of globalThis.monsterStates) {
+    // Simple random movement: pick a random direction that is not a wall
+    const dirs = [
+      {dx: 1, dy: 0}, {dx: -1, dy: 0}, {dx: 0, dy: 1}, {dx: 0, dy: -1}
+    ];
+    const validDirs = dirs.filter(d => canMove(m.x + d.dx, m.y + d.dy));
+    if (validDirs.length > 0) {
+      const choice = validDirs[Math.floor(Math.random() * validDirs.length)];
+      m.x += choice.dx;
+      m.y += choice.dy;
+    }
+  }
+}
+
 function drawMonsters() {
-  for (const m of monsters) {
+  for (const m of globalThis.monsterStates) {
     drawMonsterIcon(ctx, m.x * tileSize + tileSize/2, m.y * tileSize + tileSize/2, 28, m.color, m.icon);
   }
 }
@@ -266,9 +284,17 @@ document.addEventListener('keydown', e => {
   }
 });
 
+let lastMonsterMove = 0;
+const MONSTER_MOVE_INTERVAL = 300; // ms
+
 function gameLoop(timestamp) {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawMap();
+  if (!lastMonsterMove) lastMonsterMove = timestamp;
+  if (timestamp - lastMonsterMove > MONSTER_MOVE_INTERVAL) {
+    moveMonsters();
+    lastMonsterMove = timestamp;
+  }
   drawMonsters();
   drawPacman();
   drawScore();

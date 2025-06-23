@@ -4,3 +4,8 @@ spec-generator/node_modules
 spec-generator/out
 devcontainer-index.json
 devcontainer-control-manifest.json
+vendor/
+.bundle/
+.sass-cache
+.jekyll-cache
+.jekyll-metadata
